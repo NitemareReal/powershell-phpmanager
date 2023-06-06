@@ -89,7 +89,8 @@
                 }
                 $filename = [System.IO.Path]::GetFileName($extensionToEnable.Filename)
                 $canUseBaseName = [System.Version]$phpVersion.Version -ge [System.Version]'7.2'
-                $rxSearch = '^(\s*)([;#][\s;#]*)?(\s*(?:zend_)?extension\s*=\s*)('
+# JMFA                $rxSearch = '^(\s*)([;#][\s;#]*)?(\s*(?:zend_)?extension\s*=\s*)('
+                $rxSearch = '^([;#]*)?((?:zend_)?extension\s*=\s*)('
                 $rxSearch += '(?:(?:.*[/\\])?' + [regex]::Escape($filename) + ')';
                 if ($canUseBaseName) {
                     $match = $filename | Select-String -Pattern '^php_(.+)\.dll$'
@@ -97,7 +98,8 @@
                         $rxSearch += '|(?:' + [regex]::Escape($match.Matches[0].Groups[1].Value) + ')'
                     }
                 }
-                $rxSearch += ')"?\s*$'
+                $comentarioFinal = "(\s*[;#][A-z0-1\s\t]*)*";  # JMFA
+                $rxSearch += ')"?'+$comentarioFinal+'$'
                 if ($extensionToEnable.Filename -like ($extensionDir + '*')) {
                     $newIniValue = $extensionToEnable.Filename.SubString($extensionDir.Length)
                     if ($canUseBaseName) {
@@ -119,7 +121,8 @@
                         $newIniLines += $line
                     } elseif (-Not($found)) {
                         $found = $true
-                        $newIniLines += $match.Matches[0].Groups[1].Value + "$iniKey=$newIniValue"
+                        # JMFA: $newIniLines += $match.Matches[0].Groups[1].Value + "$iniKey=$newIniValue"
+                        $newIniLines += "$iniKey=$newIniValue"+$match.Matches[0].Groups[4].Value
                     }
                 }
                 if (-Not($found)) {
